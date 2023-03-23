@@ -1,54 +1,52 @@
-#define  _GNU_SOURCE
 #include "monty.h"
 
-globales_t globalvar = {NULL, NULL, NULL};
+stack_t *head = NULL;
 
 /**
- * main - entry point for the CLI program
- * @argc: count of arguments passed to the program
- * @argv: pointer to an array of char pointers to arguments
- * Return: EXIT_SUCCESS or EXIT_FAILURE
- */
-
-int main(int argc, char **argv)
+  * main - The Monty Interpreter entry point
+  * @argn: The args number
+  * @args: The args passed to the interpreter
+  *
+  * Return: Always zero
+  */
+int main(int argn, char *args[])
 {
-	char *token = NULL;
-	size_t line_buf_size = 0;
-	int line_number = 0, flag = 0, flag2 = 0;
-	ssize_t line_size;
-	stack_t *stack = NULL;
+	FILE *fd = NULL;
+	size_t line_len = 0;
+	unsigned int line_num = 1;
+	int readed = 0, op_status = 0;
+	char *filename = NULL, *op_code = NULL, *op_param = NULL, *buff = NULL;
 
-	if (argc != 2)
-		stderr_usage();
-	globalvar.fd = fopen(argv[1], "r");
-	if (globalvar.fd == NULL)
-		stderr_fopen(argv[1]);
-	line_size = getline(&globalvar.line_buf, &line_buf_size, globalvar.fd);
-	if (globalvar.line_buf[0] == '#')
-		line_size = getline(&globalvar.line_buf, &line_buf_size, globalvar.fd);
-	while (line_size >= 0)
-	{flag = 0;
-		flag2 = 0;
-		line_number++;
-		token = strtok(globalvar.line_buf, DELIM);
-		globalvar.token2 = strtok(NULL, DELIM);
-		if (token == NULL)
-		{flag2 = 1;
-			nop(&stack, line_number); }
-		if (flag2 == 0)
+	filename = args[1];
+	check_args_num(argn);
+	fd = open_file(filename);
+
+	while ((readed = getline(&buff, &line_len, fd)) != -1)
+	{
+		op_code = strtok(buff, "\t\n ");
+		if (op_code)
 		{
-			if (token[0] == '#')
+			if (op_code[0] == '#')
 			{
-				line_size = getline(&globalvar.line_buf,
-						    &line_buf_size, globalvar.fd);
-				flag = 1; }}
-		if (flag == 0)
-		{get_builtin(token, &stack, line_number);
-			line_size = getline(&globalvar.line_buf, &line_buf_size,
-					    globalvar.fd); }}
-	free_dlistint(stack);
-	free(globalvar.line_buf);
-	globalvar.line_buf = NULL;
-	fclose(globalvar.fd);
-	return (EXIT_SUCCESS);
+				++line_num;
+				continue;
+			}
+
+			op_param = strtok(NULL, "\t\n ");
+			op_status = handle_execution(op_code, op_param, line_num, op_status);
+
+			if (op_status >= 100 && op_status < 300)
+			{
+				fclose(fd);
+				handle_error(op_status, op_code, line_num, buff);
+			}
+		}
+
+		++line_num;
+	}
+
+	frees_stack();
+	free(buff);
+	fclose(fd);
+	return (0);
 }

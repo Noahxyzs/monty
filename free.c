@@ -1,32 +1,23 @@
 #include "monty.h"
 
 /**
- * free_dlistint - free a dlistint_t list.
- * @stack: pointer to the first element of the list
- * Return: no return
- */
-void free_dlistint(stack_t *stack)
+  * frees_stack - Releases all elements in the stack
+  *
+  * Return: Nothing
+  */
+void frees_stack(void)
 {
-	stack_t *aux = NULL;
 	stack_t *temp = NULL;
 
-	temp = stack;
-	while (temp != NULL)
+	if (head)
 	{
-		aux = temp->next;
-		free(temp);
-		temp = aux;
-	}
-	stack = NULL;
-}
+		temp = head;
 
-/**
- * free_globalvars - free a dlistint_t list.
- *
- * Return: no return
- */
-void free_globalvars(void)
-{
-	fclose(globalvar.fd);
-	free(globalvar.line_buf);
+		while (temp)
+		{
+			head = head->next;
+			free(temp);
+			temp = head;
+		}
+	}
 }
